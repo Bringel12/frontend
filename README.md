@@ -15,6 +15,17 @@ consome o endpoint de streaming e renderiza os tokens em tempo real.
 
 ## Como executar
 
+### 0. Variáveis de ambiente
+
+Copie o arquivo `.env.example` para `.env` (backend) e `.env.local` (frontend) e ajuste os valores:
+
+- `DATABASE_URL`: string de conexão SQLAlchemy.
+- `OPENAI_API_KEY`: chave da OpenAI (mantém o fallback local caso fique vazio).
+- `OPENAI_MODEL`: modelo usado na API (ex.: `gpt-4o-mini`).
+- `REACT_APP_API_URL`: URL do backend consumido pelo React.
+
+Sem a chave de IA o backend continua respondendo, mas o `healthcheck` indicará o modo `local-fallback`.
+
 ### 1. Backend
 
 ```bash
@@ -37,7 +48,7 @@ npm start
 ```
 
 A aplicação React conversa com `http://localhost:8000` por padrão. Altere com
-`REACT_APP_API_URL` caso necessário.
+`REACT_APP_API_URL` caso necessário. O projeto usa React 18.2 (compatível com CRA 5).
 
 ## Testes
 
@@ -45,6 +56,9 @@ A aplicação React conversa com `http://localhost:8000` por padrão. Altere com
 pytest
 npm test -- --watchAll=false
 ```
+
+> **Nota**: em ambientes corporativos com bloqueio ao registry do npm é normal ver erros 403 ao executar `npm install`. Nesses casos
+> configure o proxy/liberação antes de iniciar o frontend.
 
 ## Fluxo
 
