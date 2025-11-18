@@ -1,18 +1,53 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Interface React para o assistente RAG com FastAPI"
-    />
-    <title>Assistente RAG</title>
+    <title>ChatBot</title>
+    <link rel="stylesheet" href="css/style.css" />
+
   </head>
   <body>
-    <noscript>Você precisa habilitar o JavaScript para executar esta aplicação.</noscript>
-    <div id="root"></div>
+    <header>💬 ChatBot</header>
+
+    <div class="chat-container">
+      <div class="messages-box" id="messages"></div>
+      <div class="input-area">
+        <input type="text" id="input" placeholder="Digite sua mensagem..." />
+        <button onclick="sendMessage()">Enviar</button>
+      </div>
+    </div>
+
+    <script>
+      const messagesBox = document.getElementById("messages");
+      const input = document.getElementById("input");
+
+      function sendMessage() {
+        const text = input.value.trim();
+        if (!text) return;
+
+        // Mostrar mensagem do usuário
+        const userMsg = document.createElement("div");
+        userMsg.classList.add("message", "user");
+        userMsg.innerText = text;
+        messagesBox.appendChild(userMsg);
+
+        input.value = "";
+        messagesBox.scrollTop = messagesBox.scrollHeight;
+
+        // Simular resposta do bot
+        setTimeout(() => {
+          const botMsg = document.createElement("div");
+          botMsg.classList.add("message", "bot");
+          botMsg.innerText = "Bot: Recebi sua mensagem → " + text;
+          messagesBox.appendChild(botMsg);
+          messagesBox.scrollTop = messagesBox.scrollHeight;
+        }, 500);
+      }
+
+      // Permitir enviar ao pressionar Enter
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") sendMessage();
+      });
+    </script>
   </body>
 </html>
