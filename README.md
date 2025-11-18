@@ -1,70 +1,69 @@
-# Getting Started with Create React App
+# Assistente RAG com FastAPI + React
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Aplicação full-stack que demonstra um fluxo Retrieval Augmented Generation (RAG) completo.
+O backend FastAPI consulta documentos salvos em um banco SQL (SQLite por padrão), calcula
+embeddings simples (bag-of-words), seleciona os trechos mais relevantes e gera uma resposta
+usando um LLM remoto (OpenAI) ou um gerador local determinístico. O frontend em React
+consome o endpoint de streaming e renderiza os tokens em tempo real.
 
-## Available Scripts
+## Tecnologias principais
 
-In the project directory, you can run:
+- **Backend**: FastAPI + SQLAlchemy (sincrono) + pipeline de RAG (embeddings + retrieval + LLM)
+- **Banco**: SQLite (padrão) – pode ser trocado configurando `DATABASE_URL`
+- **Frontend**: React com Create React App
+- **Testes**: Pytest (backend) e React Testing Library (frontend)
 
-### `npm start`
+## Como executar
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### 0. Variáveis de ambiente
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Copie o arquivo `.env.example` para `.env` (backend) e `.env.local` (frontend) e ajuste os valores:
 
-### `npm test`
+- `DATABASE_URL`: string de conexão SQLAlchemy.
+- `OPENAI_API_KEY`: chave da OpenAI (mantém o fallback local caso fique vazio).
+- `OPENAI_MODEL`: modelo usado na API (ex.: `gpt-4o-mini`).
+- `REACT_APP_API_URL`: URL do backend consumido pelo React.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Sem a chave de IA o backend continua respondendo, mas o `healthcheck` indicará o modo `local-fallback`.
 
-### `npm run build`
+### 1. Backend
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app:app --reload
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Variáveis úteis:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- `DATABASE_URL`: URL compatível com SQLAlchemy (ex.: `sqlite:///./rag_chat.db`)
+- `OPENAI_API_KEY`: usa GPT-4o-mini via API; sem a chave, o fallback local mantém as respostas
 
-### `npm run eject`
+### 2. Frontend
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```bash
+npm install
+npm start
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+A aplicação React conversa com `http://localhost:8000` por padrão. Altere com
+`REACT_APP_API_URL` caso necessário. O projeto usa React 18.2 (compatível com CRA 5).
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## Testes
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+```bash
+pytest
+npm test -- --watchAll=false
+```
 
-## Learn More
+> **Nota**: em ambientes corporativos com bloqueio ao registry do npm é normal ver erros 403 ao executar `npm install`. Nesses casos
+> configure o proxy/liberação antes de iniciar o frontend.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## Fluxo
 
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+1. Usuário envia pergunta no React
+2. Backend busca documentos no SQL, gera embeddings e escolhe os melhores trechos
+3. Contexto é enviado ao LLM que responde; o resultado é transmitido via SSE
+4. Frontend renderiza os tokens e exibe as fontes usadas
+5. Conversas ficam persistidas para auditoria
