@@ -1,70 +1,102 @@
-# Getting Started with Create React App
+# Assistente RAG com FastAPI + React
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Aplicação full-stack que demonstra um fluxo Retrieval Augmented Generation (RAG) completo.
+O backend FastAPI consulta documentos salvos em um banco SQL (SQLite por padrão), calcula
+embeddings simples (bag-of-words), seleciona os trechos mais relevantes e gera uma resposta
+usando um LLM remoto (OpenAI) ou um gerador local determinístico. O frontend em React
+consome o endpoint de streaming e renderiza os tokens em tempo real.
 
-## Available Scripts
+## Tecnologias principais
 
-In the project directory, you can run:
+- **Backend**: FastAPI + SQLAlchemy (sincrono) + pipeline de RAG (embeddings + retrieval + LLM)
+- **Banco**: SQLite (padrão) – pode ser trocado configurando `DATABASE_URL`
+- **Frontend**: React com Create React App
+- **Testes**: Pytest (backend) e React Testing Library (frontend)
 
-### `npm start`
+## Estrutura do repositório
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Todo o código fica diretamente na raiz (`/workspace/frontend`). Em vez de duas pastas separadas
+"backend" e "frontend", usamos os seguintes caminhos:
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+| Caminho | O que contém |
+| --- | --- |
+| `app.py` | Servidor FastAPI com o pipeline RAG (banco + embeddings + retrieval + LLM + SSE). |
+| `requirements.txt` | Dependências Python usadas pelo backend. |
+| `src/`, `public/`, `package.json` | Projeto React criado com Create React App. |
+| `tests/` | Testes Pytest que validam a API. |
+| `.env.example` | Modelo com todas as variáveis necessárias. |
 
-### `npm test`
+Basta abrir um terminal na raiz para seguir os próximos passos.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Como executar
 
-### `npm run build`
+### 0. Variáveis de ambiente
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Todos os comandos são executados a partir da raiz (`/workspace/frontend`). Comece copiando o
+arquivo de exemplo e preenchendo os campos com a sua chave da IA e demais valores:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+cp .env.example .env      # usado pelo FastAPI (lido automaticamente via python-dotenv)
+cp .env.example .env.local  # usado pelo React
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Depois edite os arquivos criados e ajuste os valores conforme necessário:
 
-### `npm run eject`
+- `DATABASE_URL`: string de conexão SQLAlchemy.
+- `OPENAI_API_KEY`: chave da OpenAI (mantém o fallback local caso fique vazio).
+- `OPENAI_MODEL`: modelo usado na API (ex.: `gpt-4o-mini`).
+- `REACT_APP_API_URL`: URL do backend consumido pelo React.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+> Com o `python-dotenv`, o backend FastAPI já lê automaticamente o arquivo `.env`, então basta manter
+> o servidor no mesmo diretório em que o arquivo foi criado. Sem chave de IA o backend continua
+> respondendo, mas o `healthcheck` indicará o modo `local-fallback`.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### 1. Backend (FastAPI)
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Execute todos os comandos a seguir dentro da pasta `/workspace/frontend`:
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+```bash
+# criar o ambiente virtual
+python -m venv .venv
 
-## Learn More
+# ativar o ambiente
+source .venv/bin/activate
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+# instalar dependências
+pip install -r requirements.txt
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+# iniciar o servidor na porta 8000
+uvicorn app:app --reload
+```
 
-### Code Splitting
+Enquanto o `uvicorn` estiver rodando ele já vai ler `DATABASE_URL`, `OPENAI_API_KEY` e demais
+variáveis do `.env`. Deixe esse terminal aberto para acompanhar logs.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### 2. Frontend (React)
 
-### Analyzing the Bundle Size
+```bash
+npm install
+npm start
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+A aplicação React conversa com `http://localhost:8000` por padrão. Se o backend estiver em outra
+URL, ajuste `REACT_APP_API_URL` no arquivo `.env.local`. É recomendável manter um segundo terminal
+apenas para o frontend.
 
-### Making a Progressive Web App
+## Testes
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+```bash
+pytest
+npm test -- --watchAll=false
+```
 
-### Advanced Configuration
+> **Nota**: em ambientes corporativos com bloqueio ao registry do npm é normal ver erros 403 ao executar `npm install`. Nesses casos
+> configure o proxy/liberação antes de iniciar o frontend.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## Fluxo
 
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+1. Usuário envia pergunta no React
+2. Backend busca documentos no SQL, gera embeddings e escolhe os melhores trechos
+3. Contexto é enviado ao LLM que responde; o resultado é transmitido via SSE
+4. Frontend renderiza os tokens e exibe as fontes usadas
+5. Conversas ficam persistidas para auditoria
