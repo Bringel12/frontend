@@ -32,14 +32,24 @@ Basta abrir um terminal na raiz para seguir os próximos passos.
 
 ### 0. Variáveis de ambiente
 
-Copie o arquivo `.env.example` para `.env` (backend) e `.env.local` (frontend) e ajuste os valores:
+Todos os comandos são executados a partir da raiz (`/workspace/frontend`). Comece copiando o
+arquivo de exemplo e preenchendo os campos com a sua chave da IA e demais valores:
+
+```bash
+cp .env.example .env      # usado pelo FastAPI (lido automaticamente via python-dotenv)
+cp .env.example .env.local  # usado pelo React
+```
+
+Depois edite os arquivos criados e ajuste os valores conforme necessário:
 
 - `DATABASE_URL`: string de conexão SQLAlchemy.
 - `OPENAI_API_KEY`: chave da OpenAI (mantém o fallback local caso fique vazio).
 - `OPENAI_MODEL`: modelo usado na API (ex.: `gpt-4o-mini`).
 - `REACT_APP_API_URL`: URL do backend consumido pelo React.
 
-Sem a chave de IA o backend continua respondendo, mas o `healthcheck` indicará o modo `local-fallback`.
+> Com o `python-dotenv`, o backend FastAPI já lê automaticamente o arquivo `.env`, então basta manter
+> o servidor no mesmo diretório em que o arquivo foi criado. Sem chave de IA o backend continua
+> respondendo, mas o `healthcheck` indicará o modo `local-fallback`.
 
 ### 1. Backend (FastAPI)
 

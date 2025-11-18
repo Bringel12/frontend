@@ -13,6 +13,9 @@ from pydantic import BaseModel
 from sqlalchemy import DateTime, String, Text, select
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
+from dotenv import load_dotenv
+
+load_dotenv()
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./rag_chat.db")
 
