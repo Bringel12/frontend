@@ -297,9 +297,13 @@ async def startup_event() -> None:
     await create_db_and_seed()
 
 
+def current_llm_mode() -> str:
+    return "openai" if llm_client.api_key else "local-fallback"
+
+
 @app.get("/health")
 async def healthcheck() -> dict:
-    return {"status": "ok"}
+    return {"status": "ok", "llm_mode": current_llm_mode()}
 
 
 @app.get("/documents", response_model=List[SourceDocument])
